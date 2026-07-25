@@ -143,37 +143,37 @@ a { color: inherit; text-decoration: none; }
 }
 .schema-board {
   display: flex;
-  gap: 0.9rem;
+  gap: 1.4rem;
   flex-shrink: 0;
 }
 .face-card {
-  width: 100px;
+  width: 170px;
   border: 1px solid var(--border);
-  padding: 1.1rem 0.8rem 1.4rem;
+  padding: 1.6rem 1.2rem 2rem;
   background: var(--gray-bg);
-  border-radius: 10px;
+  border-radius: 14px;
   position: relative;
 }
 .face-card::before {
   content: "";
   display: block;
-  width: 22px;
-  height: 8px;
+  width: 36px;
+  height: 13px;
   background: #d9d9d9;
-  border-radius: 3px 3px 0 0;
-  margin: 0 auto 0.8rem;
+  border-radius: 4px 4px 0 0;
+  margin: 0 auto 1.2rem;
 }
-.zone-pair { display: flex; flex-direction: column; gap: 0.5rem; }
+.zone-pair { display: flex; flex-direction: column; gap: 0.8rem; }
 .zone-box {
   border: 1px dashed #b9b9bd;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.95rem;
   text-align: center;
-  padding: 1rem 0.2rem;
-  border-radius: 6px;
+  padding: 1.8rem 0.4rem;
+  border-radius: 8px;
   background: #fff;
 }
-.face-caption { margin-top: 0.6rem; text-align: center; font-size: 0.75rem; color: var(--muted); }
+.face-caption { margin-top: 0.9rem; text-align: center; font-size: 0.85rem; color: var(--muted); }
 
 .face-list { flex: 1; min-width: 280px; display: flex; flex-direction: row; gap: 1rem; }
 .face-list-item { flex: 1; }
