@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Bouteille · Configurateur 3D | Studio Eiger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0a0a;
+    --grey:#6b7280;
+    --bg:#ffffff;
+    --stage:#d9e9f6;
+    --line:#e5e7eb;
+    --dash:#c9d3dc;
+    --accent:#2563eb;
+    --accent-dark:#1d4ed8;
+    --accent-soft:#eaf2fd;
+    --ok:#15803d;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  html,body{height:100%;}
+  .app{
+    display:grid;
+    grid-template-columns:1fr 360px;
+    width:100%;
+    height:100vh;
+  }
+  @media (min-width:881px){ body{overflow:hidden;} }
+  .stage{
+    position:relative;
+    background:var(--stage);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;height:100%;
+  }
+  .stage-ghost{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:clamp(48px,7.2vw,120px);
+    letter-spacing:.01em;color:rgba(255,255,255,.55);white-space:nowrap;
+    pointer-events:none;user-select:none;
+  }
+  #canvas3d{position:relative;display:block;width:100%;height:100%;touch-action:none;cursor:grab;}
+  #canvas3d.dragging{cursor:grabbing;}
+  .stage-hint{
+    position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+    font-size:12px;font-weight:500;color:var(--grey);
+    background:rgba(255,255,255,.85);
+    padding:7px 16px;border-radius:99px;
+    pointer-events:none;white-space:nowrap;
+  }
+  .stage-brand{
+    position:absolute;top:22px;left:26px;
+    font-weight:800;font-size:14px;
+    letter-spacing:.02em;text-transform:uppercase;color:var(--ink);
+    display:flex;align-items:center;gap:10px;
+  }
+  .stage-brand img{height:26px;width:auto;display:block;mix-blend-mode:multiply;}
+  .side{
+    background:var(--bg);border-left:1px solid var(--line);
+    padding:20px 22px 16px;display:flex;flex-direction:column;gap:10px;
+    height:100vh;overflow:auto;
+  }
+  .side .eyebrow{
+    font-size:12px;font-weight:700;color:var(--grey);letter-spacing:.02em;
+  }
+  .side h1{
+    font-weight:800;font-size:19px;line-height:1.12;
+    text-transform:uppercase;letter-spacing:-0.01em;
+  }
+  .side p.lead{font-size:12px;color:var(--grey);line-height:1.5;}
+  .zones{display:flex;flex-direction:column;gap:6px;margin-top:2px;}
+  .zone{
+    border:1.5px dashed var(--dash);border-radius:11px;padding:7px 10px;
+    display:flex;align-items:center;gap:9px;cursor:pointer;
+    transition:border-color .15s;background:#fff;
+  }
+  .zone:hover{border-color:var(--accent);}
+  .zone.active{border-color:var(--accent);border-style:solid;}
+  .zone.filled{border-style:solid;border-color:var(--line);}
+  .zone.locked{cursor:pointer;background:#fafafa;border-style:solid;border-color:var(--line);}
+  .zone .tag{
+    font-weight:700;font-size:12px;
+    width:30px;height:30px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:#f3f4f6;color:var(--ink);flex-shrink:0;
+  }
+  .zone.locked .tag{background:#eceff3;color:var(--grey);}
+  .zone.filled .tag{background:var(--accent);color:#fff;}
+  .zone .meta{flex:1;min-width:0;}
+  .zone .meta .name{font-size:13px;font-weight:600;}
+  .zone.locked .meta .name{color:var(--grey);}
+  .zone .meta .status{font-size:11px;color:var(--grey);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .zone.filled .meta .status{color:var(--ok);}
+  .zone .meta .status.err{color:#b91c1c;font-weight:600;}
+  .zone .meta .status.warn{color:#b45309;font-weight:600;}
+  .specs{
+    font-size:11px;color:var(--accent-dark);line-height:1.5;
+    background:var(--accent-soft);
+    border-radius:10px;padding:10px 12px;
+  }
+  .specs strong{display:block;color:var(--accent-dark);font-weight:700;font-size:12.5px;margin-bottom:3px;}
+  .zone .actions{display:flex;gap:6px;flex-shrink:0;}
+  .zone .actions button{
+    border:1px solid var(--line);background:#fff;border-radius:8px;
+    font-size:11px;font-weight:600;padding:6px 10px;cursor:pointer;
+    color:var(--ink);font-family:'Inter',sans-serif;
+  }
+  .zone .actions button:hover{border-color:var(--ink);}
+  .zone .actions button.rm{display:none;}
+  .zone.filled .actions button.rm{display:inline-block;}
+  #fileInput{display:none;}
+  .side .foot{
+    margin-top:auto;display:flex;flex-direction:column;gap:6px;
+    padding-top:12px;border-top:1px solid var(--line);
+  }
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:700;font-size:12.5px;
+    border-radius:10px;padding:10px 14px;cursor:pointer;
+    border:1px solid transparent;text-align:center;
+  }
+  .btn-primary{background:var(--ink);color:#fff;}
+  .btn-primary:hover{background:#262626;}
+  .btn-ghost{background:#fff;color:var(--grey);border-color:var(--line);}
+  .btn-ghost:hover{color:var(--ink);border-color:var(--ink);}
+  .crop-overlay{position:fixed;inset:0;background:rgba(10,10,10,.5);display:flex;align-items:center;justify-content:center;z-index:9999;}
+  .crop-overlay[hidden]{display:none;}
+  .crop-box{background:#fff;border-radius:16px;padding:22px;max-width:420px;width:calc(100% - 40px);display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(10,10,10,.25);}
+  .crop-box h2{font-size:15px;font-weight:800;text-transform:uppercase;margin:0;}
+  .crop-stage{align-self:center;border:2px solid var(--accent);border-radius:8px;overflow:hidden;touch-action:none;cursor:move;}
+  .crop-stage canvas{display:block;}
+  .crop-zoom-row{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:500;color:var(--grey);}
+  .crop-zoom-row input{flex:1;accent-color:var(--accent);}
+  .crop-actions{display:flex;gap:8px;}
+  .crop-actions .btn{flex:1;}
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr;height:auto;}
+    .stage{height:60vh;min-height:380px;}
+    .side{border-left:none;border-top:1px solid var(--line);height:auto;overflow:visible;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage">
+    <div class="stage-brand"><img src="https://cdn.prod.website-files.com/68f742c6ec60b25f4484cd93/69172dc99bc5f641815b3a22_favicon.jpg" alt="Studio Eiger">Studio Eiger</div>
+    <div class="stage-ghost">STUDIO EIGER</div>
+    <canvas id="canvas3d"></canvas>
+    <div class="stage-hint">Glissez pour faire pivoter · Cliquez une zone pour charger votre visuel</div>
+  </div>
+
+  <aside class="side">
+    <div class="eyebrow">Le configurateur</div>
+    <h1>Visualisez votre marque sur La Bouteille</h1>
+    <p class="lead">Chargez votre visuel sur une ou plusieurs des 6 zones : recadrez-le au bon format et le rendu s'affiche en temps réel.</p>
+    <div class="specs">
+      <strong>Format recommandé</strong>
+      Face 1 : 618 × 948 px · Faces 2 et 3 : 585 × 948 px (300 dpi). PNG, JPG ou WebP. Toute image peut être recadrée ici.
+    </div>
+    <div class="zones" id="zoneList"></div>
+    <div class="foot">
+      <button class="btn btn-primary" id="exportBtn">Télécharger l'aperçu (PNG)</button>
+      <button class="btn btn-ghost" id="resetBtn">Réinitialiser toutes les zones</button>
+    </div>
+  </aside>
+</div>
+
+<div id="cropModal" class="crop-overlay" hidden>
+  <div class="crop-box">
+    <h2>Recadrez votre visuel · <span id="cropZoneLabel"></span></h2>
+    <div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas></div>
+    <div class="crop-zoom-row">Zoom <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1"></div>
+    <div class="crop-actions">
+      <button class="btn btn-ghost" id="cropCancel">Annuler</button>
+      <button class="btn btn-primary" id="cropOk">Valider le recadrage</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  const LOGO_URL = 'https://cdn.prod.website-files.com/68f742c6ec60b25f4484cd93/69172dc99bc5f641815b3a22_favicon.jpg';
+
+  // ----- Dimensions reelles issues du patron OMA Water (gabarit 211 x 200 mm) -----
+  const MM = 1/50;            // 1 unite 3D = 50 mm
+  const W = 52.3*MM;          // faces avant / arriere : 52,3 mm
+  const D = 49.5*MM;          // cotes : 49,5 mm (section non carree)
+  const H = 160.5*MM;         // hauteur du corps imprimable : 160,5 mm
+  const CH = 6*MM;            // chanfrein superieur (raccourci)
+  const TOP_INSET = 9*MM;     // retrait du plateau
+  const EPS = 0.004;
+
+  // 6 zones : avant, cote droit, cote gauche, chacune divisee haut/bas, bord a bord
+  // Face arriere : informations legales
+  // px = taille requise a 300 dpi sur les cotes reelles du patron OMA Water
+  const ZONES = [
+    {id:'1', name:'Face 1 · haut',  face:'front', slot:'top',    dims:'52 × 80 mm', px:{w:618, h:948}},
+    {id:'2', name:'Face 1 · bas',   face:'front', slot:'bottom', dims:'52 × 80 mm', px:{w:618, h:948}},
+    {id:'3', name:'Face 2 · haut',  face:'right', slot:'top',    dims:'50 × 80 mm', px:{w:585, h:948}},
+    {id:'4', name:'Face 2 · bas',   face:'right', slot:'bottom', dims:'50 × 80 mm', px:{w:585, h:948}},
+    {id:'5', name:'Face 3 · haut',  face:'left',  slot:'top',    dims:'50 × 80 mm', px:{w:585, h:948}},
+    {id:'6', name:'Face 3 · bas',   face:'left',  slot:'bottom', dims:'50 × 80 mm', px:{w:585, h:948}},
+  ];
+  const RATIO_TOL = 0.015; // tolerance de 1,5 % sur les proportions
+
+  // ----- Scene -----
+  const canvas = document.getElementById('canvas3d');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, preserveDrawingBuffer:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
+  let camDist = 7.4, camPitch = 0;
+  camera.position.set(0, 1.9, camDist);
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xe2eaee, 0.95));
+  const key = new THREE.DirectionalLight(0xffffff, 0.6);
+  key.position.set(3, 5, 4);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xd6e6ee, 0.28);
+  fill.position.set(-4, 2, -3);
+  scene.add(fill);
+
+  const bottle = new THREE.Group();
+  scene.add(bottle);
+
+  const cartonMat = new THREE.MeshPhongMaterial({color:0xf6f6f3, shininess:14, specular:0x9aacb6});
+
+  // Corps droit
+  const body = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), cartonMat);
+  body.position.y = H/2;
+  bottle.add(body);
+
+  // Chanfrein superieur : pyramide tronquee (aretes hautes adoucies comme sur les photos)
+  const topSide = W - TOP_INSET*2;
+  const chamfer = new THREE.Mesh(
+    new THREE.CylinderGeometry(topSide*Math.SQRT1_2, W*Math.SQRT1_2, CH, 4, 1),
+    cartonMat
+  );
+  chamfer.rotation.y = Math.PI/4;
+  chamfer.position.y = H + CH/2;
+  bottle.add(chamfer);
+
+  // Plateau plat
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(topSide, 0.02, topSide), cartonMat);
+  plate.position.y = H + CH + 0.01;
+  bottle.add(plate);
+
+  // Plis en V au sommet des faces avant et arriere (soudure du carton)
+  function addCrease(z){
+    const yTop = H - 0.01, yTip = H - 14*MM;
+    const mat = new THREE.LineBasicMaterial({color:0xd6d6d0, transparent:true, opacity:0.9});
+    const pts = [
+      new THREE.Vector3(-W/2 + 0.02, yTop, z),
+      new THREE.Vector3(0, yTip, z),
+      new THREE.Vector3(W/2 - 0.02, yTop, z)
+    ];
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    bottle.add(new THREE.Line(geo, mat));
+  }
+  addCrease(D/2 + EPS*2);
+  addCrease(-D/2 - EPS*2);
+
+  // Bouchon strie blanc (flutes verticales via texture)
+  const capStripeTex = (function(){
+    const c = document.createElement('canvas'); c.width = 256; c.height = 32;
+    const g = c.getContext('2d');
+    g.fillStyle = '#ffffff'; g.fillRect(0,0,256,32);
+    g.fillStyle = '#e4e6e4';
+    for(let x=0; x<256; x+=8) g.fillRect(x, 0, 3, 32);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = THREE.RepeatWrapping; t.repeat.x = 2;
+    return t;
+  })();
+  const capMat = new THREE.MeshPhongMaterial({color:0xffffff, map:capStripeTex, shininess:30, specular:0xb8c6ce});
+  const capTopMat = new THREE.MeshPhongMaterial({color:0xffffff, shininess:30, specular:0xb8c6ce});
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(13.5*MM, 13.5*MM, 2.5*MM, 32), capTopMat);
+  collar.position.y = H + CH + 1.25*MM;
+  bottle.add(collar);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(12*MM, 12*MM, 9*MM, 32), [capMat, capTopMat, capTopMat]);
+  cap.position.y = H + CH + 2.5*MM + 4.5*MM;
+  bottle.add(cap);
+
+  // Socle discret
+  const discTex = (function(){
+    const c = document.createElement('canvas'); c.width = c.height = 256;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(128,128,10,128,128,128);
+    grad.addColorStop(0,'rgba(22,35,46,0.16)');
+    grad.addColorStop(1,'rgba(22,35,46,0)');
+    g.fillStyle = grad; g.fillRect(0,0,256,256);
+    return new THREE.CanvasTexture(c);
+  })();
+  const disc = new THREE.Mesh(
+    new THREE.CircleGeometry(1.5, 48),
+    new THREE.MeshBasicMaterial({map:discTex, transparent:true, depthWrite:false})
+  );
+  disc.rotation.x = -Math.PI/2;
+  disc.position.y = 0.002;
+  scene.add(disc);
+
+  // ----- Panneaux pub : bord a bord -----
+  const HALF = H/2;
+  function slotDims(slot){
+    if(slot === 'top') return {w:W, h:HALF, yc:HALF + HALF/2};
+    return {w:W, h:HALF, yc:HALF/2};
+  }
+  const FACES = {
+    front:{pos:[0,0, D/2+EPS], rotY:0,          targetRotY:0},
+    back: {pos:[0,0,-D/2-EPS], rotY:Math.PI,    targetRotY:Math.PI},
+    right:{pos:[ W/2+EPS,0,0], rotY:Math.PI/2,  targetRotY:-Math.PI/2},
+    left: {pos:[-W/2-EPS,0,0], rotY:-Math.PI/2, targetRotY:Math.PI/2},
+  };
+
+  function placeholderTexture(zone, w, h){
+    const c = document.createElement('canvas');
+    const cw = 768, ch = Math.round(768 * h / w);
+    c.width = cw; c.height = ch;
+    const g = c.getContext('2d');
+    g.fillStyle = '#f6f6f3'; g.fillRect(0,0,cw,ch);
+    g.strokeStyle = '#c2ccd2'; g.lineWidth = 5;
+    g.setLineDash([20,14]);
+    g.strokeRect(16,16,cw-32,ch-32);
+    g.setLineDash([]);
+    g.fillStyle = '#5d7181';
+    g.font = '600 ' + Math.round(cw*0.11) + 'px Inter, sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('Zone ' + zone.id, cw/2, ch/2 - cw*0.045);
+    g.font = '500 ' + Math.round(cw*0.05) + 'px Inter, sans-serif';
+    g.fillStyle = '#8298a7';
+    g.fillText(zone.dims, cw/2, ch/2 + cw*0.07);
+    g.font = '500 ' + Math.round(cw*0.042) + 'px Inter, sans-serif';
+    g.font = '500 ' + Math.round(cw*0.038) + 'px Inter, sans-serif';
+    g.fillText(zone.px.w + ' × ' + zone.px.h + ' px · 300 dpi', cw/2, ch/2 + cw*0.155);
+    const t = new THREE.CanvasTexture(c);
+    t.encoding = THREE.sRGBEncoding;
+    return t;
+  }
+
+  // ----- Face arriere : titre + logo Studio Eiger -----
+  const legalCanvas = document.createElement('canvas');
+  legalCanvas.width = 768;
+  legalCanvas.height = Math.round(768 * H / W);
+  const legalTex = new THREE.CanvasTexture(legalCanvas);
+  legalTex.encoding = THREE.sRGBEncoding;
+
+  function drawLegal(logoImg){
+    const cw = legalCanvas.width, ch = legalCanvas.height;
+    const g = legalCanvas.getContext('2d');
+    g.fillStyle = '#f6f6f3'; g.fillRect(0,0,cw,ch);
+    g.fillStyle = '#3c4d5b';
+    g.font = '600 ' + Math.round(cw*0.072) + 'px Inter, sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('Informations légales', cw/2, ch*0.16);
+    if(logoImg){
+      const lw = cw*0.42;
+      const lh = lw * (logoImg.height/logoImg.width);
+      g.drawImage(logoImg, (cw-lw)/2, ch*0.5 - lh/2, lw, lh);
+    }
+    legalTex.needsUpdate = true;
+  }
+  drawLegal(null);
+  const logoImg = new Image();
+  logoImg.crossOrigin = 'anonymous';
+  logoImg.onload = () => drawLegal(logoImg);
+  logoImg.src = LOGO_URL;
+
+  const legal = new THREE.Mesh(
+    new THREE.PlaneGeometry(W, H),
+    new THREE.MeshPhongMaterial({map:legalTex, shininess:14})
+  );
+  legal.position.set(0, H/2, -D/2 - EPS);
+  legal.rotation.y = Math.PI;
+  bottle.add(legal);
+
+  const panelMeshes = [];
+  ZONES.forEach(zone => {
+    const f = FACES[zone.face];
+    const dims = slotDims(zone.slot);
+    const geo = new THREE.PlaneGeometry(dims.w, dims.h);
+    const mat = new THREE.MeshPhongMaterial({map:placeholderTexture(zone, dims.w, dims.h), shininess:14});
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(f.pos[0], dims.yc, f.pos[2]);
+    mesh.rotation.y = f.rotY;
+    mesh.userData.zone = zone.id;
+    mesh.userData.targetRotY = f.targetRotY;
+    mesh.userData.dims = dims;
+    bottle.add(mesh);
+    panelMeshes.push(mesh);
+  });
+
+  // ----- Sidebar -----
+  const zoneList = document.getElementById('zoneList');
+  const fileInput = document.getElementById('fileInput');
+  let pendingZone = null;
+
+  ZONES.forEach(zone => {
+    const el = document.createElement('div');
+    el.className = 'zone';
+    el.id = 'zone-' + zone.id;
+    el.innerHTML =
+      '<div class="tag">' + zone.id + '</div>' +
+      '<div class="meta"><div class="name">' + zone.name + '</div>' +
+      '<div class="status">Vide · min : ' + zone.px.w + ' × ' + zone.px.h + ' px</div></div>' +
+      '<div class="actions">' +
+      '<button class="up">Charger</button>' +
+      '<button class="rm">Retirer</button></div>';
+    el.querySelector('.up').addEventListener('click', e => { e.stopPropagation(); openPicker(zone.id); });
+    el.querySelector('.rm').addEventListener('click', e => { e.stopPropagation(); clearZone(zone.id); });
+    el.addEventListener('click', () => focusZone(zone.id));
+    zoneList.appendChild(el);
+  });
+
+  const legalRow = document.createElement('div');
+  legalRow.className = 'zone locked';
+  legalRow.innerHTML =
+    '<div class="tag">AR</div>' +
+    '<div class="meta"><div class="name">Face arrière</div>' +
+    '<div class="status">Réservée aux informations légales</div></div>';
+  legalRow.addEventListener('click', () => rotateTo(Math.PI));
+  zoneList.appendChild(legalRow);
+
+  function openPicker(zoneId){
+    pendingZone = zoneId;
+    focusZone(zoneId);
+    fileInput.value = '';
+    fileInput.click();
+  }
+
+  // ----- Recadrage -----
+  const cropModal = document.getElementById('cropModal');
+  const cropStage = document.getElementById('cropStage');
+  const cropCanvas = document.getElementById('cropCanvas');
+  const cropZoom = document.getElementById('cropZoom');
+  const cropZoneLabel = document.getElementById('cropZoneLabel');
+  let cropImg = null, cropBase = 1, cropOx = 0, cropOy = 0, cropZone = null, prevZoom = 1;
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    if(!file || !pendingZone) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      cropImg = img;
+      cropZone = ZONES.find(z => z.id === pendingZone);
+      cropZone._fileName = file.name;
+      openCrop();
+    };
+    img.src = url;
+  });
+
+  function openCrop(){
+    cropZoneLabel.textContent = 'Zone ' + cropZone.id + ' · ' + cropZone.dims;
+    const maxW = Math.min(320, window.innerWidth - 90);
+    const w = maxW, h = Math.round(maxW * cropZone.px.h / cropZone.px.w);
+    cropCanvas.width = w; cropCanvas.height = h;
+    cropBase = Math.max(w / cropImg.width, h / cropImg.height);
+    cropZoom.value = 1; prevZoom = 1;
+    cropOx = (w - cropImg.width*cropBase)/2;
+    cropOy = (h - cropImg.height*cropBase)/2;
+    cropModal.hidden = false;
+    drawCrop();
+  }
+  function clampCrop(){
+    const z = cropBase * parseFloat(cropZoom.value);
+    cropOx = Math.min(0, Math.max(cropCanvas.width - cropImg.width*z, cropOx));
+    cropOy = Math.min(0, Math.max(cropCanvas.height - cropImg.height*z, cropOy));
+  }
+  function drawCrop(){
+    clampCrop();
+    const g = cropCanvas.getContext('2d');
+    const z = cropBase * parseFloat(cropZoom.value);
+    g.fillStyle = '#fff'; g.fillRect(0,0,cropCanvas.width,cropCanvas.height);
+    g.drawImage(cropImg, cropOx, cropOy, cropImg.width*z, cropImg.height*z);
+  }
+  let cropDrag = false, cX = 0, cY = 0;
+  cropStage.addEventListener('pointerdown', e => {
+    cropDrag = true; cX = e.clientX; cY = e.clientY;
+    cropStage.setPointerCapture(e.pointerId);
+  });
+  cropStage.addEventListener('pointermove', e => {
+    if(!cropDrag) return;
+    cropOx += e.clientX - cX; cropOy += e.clientY - cY;
+    cX = e.clientX; cY = e.clientY;
+    drawCrop();
+  });
+  cropStage.addEventListener('pointerup', () => { cropDrag = false; });
+  cropZoom.addEventListener('input', () => {
+    const nz = parseFloat(cropZoom.value);
+    const cx = cropCanvas.width/2, cy = cropCanvas.height/2;
+    const r = nz / prevZoom;
+    cropOx = cx - (cx - cropOx)*r;
+    cropOy = cy - (cy - cropOy)*r;
+    prevZoom = nz;
+    drawCrop();
+  });
+  document.getElementById('cropCancel').addEventListener('click', () => { cropModal.hidden = true; });
+  document.getElementById('cropOk').addEventListener('click', () => {
+    const req = cropZone.px;
+    const z = cropBase * parseFloat(cropZoom.value);
+    const sx = -cropOx / z, sy = -cropOy / z;
+    const sw = cropCanvas.width / z, sh = cropCanvas.height / z;
+    const out = document.createElement('canvas');
+    out.width = req.w; out.height = req.h;
+    const g = out.getContext('2d');
+    g.fillStyle = '#ffffff'; g.fillRect(0,0,req.w,req.h);
+    g.drawImage(cropImg, sx, sy, sw, sh, 0, 0, req.w, req.h);
+    const tex = new THREE.CanvasTexture(out);
+    tex.encoding = THREE.sRGBEncoding;
+    const mesh = panelMeshes.find(m => m.userData.zone === cropZone.id);
+    mesh.material.map = tex;
+    mesh.material.needsUpdate = true;
+    const el = document.getElementById('zone-' + cropZone.id);
+    el.classList.add('filled');
+    const st = el.querySelector('.status');
+    st.classList.remove('err','warn');
+    if(sw < req.w){
+      st.classList.add('warn');
+      st.textContent = (cropZone._fileName || 'Visuel') + ' · résolution faible pour l\'impression';
+    } else {
+      st.textContent = (cropZone._fileName || 'Visuel') + ' · recadré ' + req.w + ' × ' + req.h + ' px';
+    }
+    cropModal.hidden = true;
+  });
+
+  function clearZone(zoneId){
+    const mesh = panelMeshes.find(m => m.userData.zone === zoneId);
+    const zone = ZONES.find(z => z.id === zoneId);
+    mesh.material.map = placeholderTexture(zone, mesh.userData.dims.w, mesh.userData.dims.h);
+    mesh.material.needsUpdate = true;
+    const el = document.getElementById('zone-' + zoneId);
+    el.classList.remove('filled');
+    const st2 = el.querySelector('.status');
+    st2.textContent = 'Vide · ' + zone.dims;
+    st2.classList.remove('err','warn');
+  }
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    ZONES.forEach(z => clearZone(z.id));
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    renderScene();
+    const a = document.createElement('a');
+    a.download = 'la-bouteille-apercu.png';
+    a.href = renderer.domElement.toDataURL('image/png');
+    a.click();
+  });
+
+  // Rotation animee
+  let targetRotY = null;
+  let autoRotate = true;
+  function rotateTo(target){
+    autoRotate = false;
+    let cur = bottle.rotation.y % (Math.PI*2);
+    bottle.rotation.y = cur;
+    let d = target - cur;
+    while(d > Math.PI) d -= Math.PI*2;
+    while(d < -Math.PI) d += Math.PI*2;
+    targetRotY = cur + d;
+  }
+  function focusZone(zoneId){
+    document.querySelectorAll('.zone').forEach(z => z.classList.remove('active'));
+    const el = document.getElementById('zone-' + zoneId);
+    if(el) el.classList.add('active');
+    const mesh = panelMeshes.find(m => m.userData.zone === zoneId);
+    rotateTo(mesh.userData.targetRotY);
+  }
+
+  // ----- Interactions -----
+  let dragging = false, moved = false, lastX = 0, lastY = 0;
+
+  canvas.addEventListener('pointerdown', e => {
+    dragging = true; moved = false;
+    lastX = e.clientX; lastY = e.clientY;
+    canvas.classList.add('dragging');
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if(!dragging) return;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    if(Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+    lastX = e.clientX; lastY = e.clientY;
+    bottle.rotation.y += dx * 0.011;
+    camPitch = Math.max(-0.5, Math.min(0.5, camPitch + dy * 0.004));
+    autoRotate = false;
+    targetRotY = null;
+  });
+  canvas.addEventListener('pointerup', e => {
+    dragging = false;
+    canvas.classList.remove('dragging');
+    if(!moved){
+      const rect = canvas.getBoundingClientRect();
+      const ndc = new THREE.Vector2(
+        ((e.clientX - rect.left)/rect.width)*2 - 1,
+        -((e.clientY - rect.top)/rect.height)*2 + 1
+      );
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(ndc, camera);
+      const hits = ray.intersectObjects(panelMeshes);
+      if(hits.length) openPicker(hits[0].object.userData.zone);
+    }
+  });
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    camDist = Math.max(5.0, Math.min(10.5, camDist + e.deltaY * 0.004));
+  }, {passive:false});
+
+  // ----- Boucle -----
+  function resize(){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if(canvas.width !== w * renderer.getPixelRatio() || canvas.height !== h * renderer.getPixelRatio()){
+      renderer.setSize(w, h, false);
+      camera.aspect = w/h;
+      camera.updateProjectionMatrix();
+    }
+  }
+  function renderScene(){
+    resize();
+    camera.position.y = 1.9 + camPitch * 2.4;
+    camera.position.z = camDist;
+    camera.lookAt(0, 1.75, 0);
+    renderer.render(scene, camera);
+  }
+  function loop(){
+    if(autoRotate) bottle.rotation.y += 0.004;
+    if(targetRotY !== null){
+      const d = targetRotY - bottle.rotation.y;
+      if(Math.abs(d) < 0.005){ bottle.rotation.y = targetRotY; targetRotY = null; }
+      else bottle.rotation.y += d * 0.12;
+    }
+    renderScene();
+    requestAnimationFrame(loop);
+  }
+  loop();
+  window.addEventListener('resize', renderScene);
+
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    autoRotate = false;
+  }
+})();
+</script>
+</body>
+</html>
