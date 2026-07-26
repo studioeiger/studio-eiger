@@ -224,13 +224,16 @@
   let camDist = 7.4, camPitch = 0;
   camera.position.set(0, 1.9, camDist);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xe2eaee, 0.95));
-  const key = new THREE.DirectionalLight(0xffffff, 0.6);
-  key.position.set(3, 5, 4);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xcdd9e2, 0.7));
+  const key = new THREE.DirectionalLight(0xffffff, 0.95);
+  key.position.set(3.5, 5, 4);
   scene.add(key);
-  const fill = new THREE.DirectionalLight(0xd6e6ee, 0.28);
+  const fill = new THREE.DirectionalLight(0xc9dced, 0.18);
   fill.position.set(-4, 2, -3);
   scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.3);
+  rim.position.set(-2, 4, -5);
+  scene.add(rim);
 
   const bottle = new THREE.Group();
   scene.add(bottle);
@@ -297,7 +300,7 @@
     const c = document.createElement('canvas'); c.width = c.height = 256;
     const g = c.getContext('2d');
     const grad = g.createRadialGradient(128,128,10,128,128,128);
-    grad.addColorStop(0,'rgba(22,35,46,0.16)');
+    grad.addColorStop(0,'rgba(22,35,46,0.28)');
     grad.addColorStop(1,'rgba(22,35,46,0)');
     g.fillStyle = grad; g.fillRect(0,0,256,256);
     return new THREE.CanvasTexture(c);
@@ -552,9 +555,15 @@
 
   document.getElementById('exportBtn').addEventListener('click', () => {
     renderScene();
+    const src = renderer.domElement;
+    const out = document.createElement('canvas');
+    out.width = src.width; out.height = src.height;
+    const g = out.getContext('2d');
+    g.fillStyle = '#d9e9f6'; g.fillRect(0,0,out.width,out.height);
+    g.drawImage(src, 0, 0);
     const a = document.createElement('a');
     a.download = 'la-bouteille-apercu.png';
-    a.href = renderer.domElement.toDataURL('image/png');
+    a.href = out.toDataURL('image/png');
     a.click();
   });
 
