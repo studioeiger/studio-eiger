@@ -33,3 +33,24 @@ if (form) {
     window.location.href = mailtoUrl;
   });
 }
+
+// Menu burger (mobile/tablette)
+const navToggle = document.getElementById("nav-toggle");
+const mainNav = document.getElementById("main-nav");
+
+if (navToggle && mainNav) {
+  navToggle.addEventListener("click", function () {
+    const isOpen = mainNav.classList.toggle("is-open");
+    navToggle.classList.toggle("is-open", isOpen);
+    navToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  // Ferme le menu automatiquement après avoir cliqué un lien
+  mainNav.querySelectorAll("a").forEach(function (link) {
+    link.addEventListener("click", function () {
+      mainNav.classList.remove("is-open");
+      navToggle.classList.remove("is-open");
+      navToggle.setAttribute("aria-expanded", "false");
+    });
+  });
+}
