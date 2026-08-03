@@ -1,5 +1,5 @@
 // Adresse de reception des demandes
-const CONTACT_EMAIL = "vianneygerard@icloud.com";
+const CONTACT_EMAIL = "contact@studioeiger.fr";
 
 const form = document.getElementById("contact-form");
 
