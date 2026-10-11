@@ -157,6 +157,34 @@ a { color: inherit; text-decoration: none; }
 .section-media img { width: 100%; display: block; }
 .section-media.reverse { order: -1; }
 
+/* Bandeau partenaires */
+.partners {
+  padding: 2.5rem 5%;
+  background: var(--gray-bg);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.partners .eyebrow { margin-bottom: 1.4rem; }
+.partners-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem 4rem;
+}
+.partner-logo {
+  display: block;
+  height: 96px;
+  width: auto;
+  max-width: 220px;
+  object-fit: contain;
+  mix-blend-mode: multiply; /* fait disparaître le fond blanc des logos JPG sur le bandeau gris */
+}
+
 /* Schematic / 6 zones */
 .schema-row {
   display: flex;
